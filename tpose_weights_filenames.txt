@@ -1,0 +1,45 @@
+PRIORS ----------------------------------------------------------------------------
+
+UVEL/VVEL:
+
+/home/edavenport/analysis/TPOSE6_VelocityAssim/TAO_uvel_wt_tp6_new.bin
+/home/edavenport/analysis/TPOSE6_VelocityAssim/TAO_vvel_wt_tp6_new.bin
+
+THETA: 
+/data/SO6/TPOSE/model_setup/linked_files/TP6/Argo_T_wt_fac10_tp6_66.bin
+
+SALT: 
+/data/SO6/TPOSE/model_setup/linked_files/TP6/Argo_S_wt_fac10_tp6_66.bin
+
+ATEMP: 
+/data/SO6/TPOSE/model_setup/linked_files/TP6/ERA_tmp2m_degC_wt_tp6.bin
+
+AQH:
+/data/SO6/TPOSE/model_setup/linked_files/TP6/ERA_spfh2m_wt_tp6.bin
+
+PRECIP:
+/data/SO6/TPOSE/model_setup/linked_files/TP6/ERA_rain_wt_tp6.bin
+
+SWDOWN: 
+/data/SO6/TPOSE/model_setup/linked_files/TP6/ERA_dsw_wt_tp6.bin
+
+LWDOWN:
+/data/SO6/TPOSE/model_setup/linked_files/TP6/ERA_dlw_wt_tp6.bin
+
+UWIND: 
+/data/SO6/TPOSE/model_setup/linked_files/TP6/ERA_u10m_wt_tp6.bin
+
+VWIND: 
+/data/SO6/TPOSE/model_setup/linked_files/TP6/ERA_v10m_wt_tp6.bin
+
+OBS ------------------------------------------------------------------------------
+
+SST: 
+
+/data/SO6/TPOSE/model_setup/linked_files/TP6/SST_error_tpose6_17Sto17N.bin
+
+SSH:
+
+Jason - /data/SO6/TPOSE/model_setup/linked_files/TP6/ssh_error_tpose6_17Sto17N_3cm_in_m.bin
+CryoSat - /data/SO6/TPOSE/model_setup/linked_files/TP6/ssh_error_tpose6_17Sto17N_6cm_in_m.bin
+
