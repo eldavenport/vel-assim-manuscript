@@ -2,8 +2,8 @@ PRIORS -------------------------------------------------------------------------
 
 UVEL/VVEL:
 
-/home/edavenport/analysis/TPOSE6_VelocityAssim/TAO_uvel_wt_tp6_new.bin
-/home/edavenport/analysis/TPOSE6_VelocityAssim/TAO_vvel_wt_tp6_new.bin
+/home/edavenport/analysis/TPOSE6_VelocityAssim/TAO_uvel_wt_tp6.bin
+/home/edavenport/analysis/TPOSE6_VelocityAssim/TAO_vvel_wt_tp6.bin
 
 THETA: 
 /data/SO6/TPOSE/model_setup/linked_files/TP6/Argo_T_wt_fac10_tp6_66.bin
