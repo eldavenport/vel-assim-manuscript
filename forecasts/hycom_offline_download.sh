@@ -6,10 +6,11 @@
 #   Latitude   : 10 °S – 10 °N
 #   Depth      : 0–500 m
 #   Variables  : SSH (surf_el), U (water_u), V (water_v)
-#   Period     : 01 Sep 2012 – 30 Jun 2013
-#   Output     : /data/SO3/edavenport/hycom_data/
+#   Period     : 01 Sep 2012 – 31 Dec 2013
+#   Output     : /data/SO3/edavenport/tpose6/hycom_data/
 #
 # Uses the tpose conda environment (netCDF4 with OPeNDAP support).
+# Downloads in 2-day chunks to avoid THREDDS server truncation (~1-2 GB limit).
 # Existing monthly files are skipped so interrupted runs can be resumed.
 
 set -euo pipefail

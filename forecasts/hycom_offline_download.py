@@ -4,10 +4,14 @@ Called by hycom_offline_download.sh — do not run directly.
 
 Note: the HYCOM dataset uses -180 to 180 longitude, not 0-360 as documented.
 Notebook lon 180-260°E maps to -180 to -100° in the dataset's convention.
+
+The THREDDS server silently fills values with zeros when a single OPeNDAP
+request exceeds its size limit (~1-2 GB).  Each month is downloaded in
+CHUNK_DAYS-day windows (~0.9 GB each for U+V) to stay under this limit.
 """
 import sys
 import calendar
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 import xarray as xr
@@ -15,7 +19,6 @@ from tqdm import tqdm
 
 # ── Parameters (from hycom_reanalysis_clean.ipynb) ──────────────────────────
 OUTPUT_DIR    = Path(sys.argv[1])
-# Notebook: 180–260°E (0–360 convention) → -180 to -100° (HYCOM -180 to 180)
 LON_MIN       = -180.0
 LON_MAX       = -100.0
 LAT_MIN       = -10.0
@@ -24,8 +27,9 @@ DEPTH_MIN_POS = 0.0
 DEPTH_MAX_POS = 500.0
 VARIABLES     = ["surf_el", "water_u", "water_v"]
 DEPTH_VARS    = {"water_u", "water_v"}
-TIME_START    = date(2013, 5, 1)
+TIME_START    = date(2012, 8, 1)
 TIME_END      = date(2013, 12, 31)
+CHUNK_DAYS    = 2   # ~0.9 GB/request for U+V; keeps well under server truncation limit
 THREDDS_BASE  = "https://tds.hycom.org/thredds/dodsC/GLBv0.08/expt_53.X/data/{year}"
 
 # ── Build monthly date ranges ────────────────────────────────────────────────
@@ -65,21 +69,30 @@ try:
                                                        drop_variables=["tau"])
 
             ds = open_datasets[year]
-            tslice = slice(month_start.strftime("%Y-%m-%d"),
-                           month_end.strftime("%Y-%m-%d"))
-            spatial = dict(time=tslice, lat=slice(LAT_MIN, LAT_MAX),
-                           lon=slice(LON_MIN, LON_MAX))
+            chunks = []
+            chunk_start = month_start
+            while chunk_start <= month_end:
+                chunk_end = min(chunk_start + timedelta(days=CHUNK_DAYS - 1), month_end)
+                tslice  = slice(chunk_start.strftime("%Y-%m-%d"),
+                                chunk_end.strftime("%Y-%m-%d"))
+                spatial = dict(time=tslice, lat=slice(LAT_MIN, LAT_MAX),
+                               lon=slice(LON_MIN, LON_MAX))
 
-            parts = []
-            if depth_vars:
-                parts.append(ds[depth_vars].sel(
-                    **spatial, depth=slice(DEPTH_MIN_POS, DEPTH_MAX_POS)))
-            if nodepth_vars:
-                parts.append(ds[nodepth_vars].sel(**spatial))
+                parts = []
+                if depth_vars:
+                    parts.append(ds[depth_vars].sel(
+                        **spatial, depth=slice(DEPTH_MIN_POS, DEPTH_MAX_POS)))
+                if nodepth_vars:
+                    parts.append(ds[nodepth_vars].sel(**spatial))
 
-            subset = xr.merge(parts) if len(parts) > 1 else parts[0]
-            subset.load()
-            subset.to_netcdf(str(fpath))
+                subset = xr.merge(parts) if len(parts) > 1 else parts[0]
+                subset.load()
+                chunks.append(subset)
+                tqdm.write(f"    {chunk_start} → {chunk_end} ✓")
+                chunk_start = chunk_end + timedelta(days=1)
+
+            monthly_ds = xr.concat(chunks, dim="time")
+            monthly_ds.to_netcdf(str(fpath))
             tqdm.write(f"  Saved {fname}  ({fpath.stat().st_size / 1e6:.1f} MB)")
 
 finally:

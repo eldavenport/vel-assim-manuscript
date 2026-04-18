@@ -148,6 +148,7 @@ def download_hycom(
     time_end: str,
     output_dir: str = "hycom_data",
     thredds_base: str = THREDDS_BASE,
+    chunk_days: int = 2,
 ) -> list[Path]:
     """Download HYCOM reanalysis data as monthly NetCDF files.
 
@@ -155,6 +156,12 @@ def download_hycom(
     interrupted downloads can be resumed without re-downloading.  The annual
     OPeNDAP dataset for each year is opened once and reused for all months in
     that year, then closed when the download finishes.
+
+    The HYCOM THREDDS server silently truncates large OPeNDAP responses and
+    fills remaining values with zeros rather than raising an error.  To avoid
+    this, each month is fetched in ``chunk_days``-day windows (default 2 days,
+    ~0.9 GB per chunk for U+V at this domain size) and the chunks are
+    concatenated before writing to disk.
 
     Parameters
     ----------
@@ -176,12 +183,17 @@ def download_hycom(
     thredds_base:
         OPeNDAP URL template with ``{year}`` placeholder; override to use a
         different HYCOM experiment.
+    chunk_days:
+        Number of days per OPeNDAP request.  Smaller values are safer against
+        server truncation but require more round-trips.  Default is 2.
 
     Returns
     -------
     list of Path
         Paths to all files (downloaded this call + pre-existing skipped files).
     """
+    from datetime import timedelta
+
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
 
@@ -216,26 +228,35 @@ def download_hycom(
                 open_datasets[year] = xr.open_dataset(url, engine="pydap")
 
             ds = open_datasets[year]
-            time_slice = slice(
-                month_start.strftime("%Y-%m-%d"),
-                month_end.strftime("%Y-%m-%d"),
-            )
 
-            subset = _select_subset(
-                ds=ds,
-                depth_hycom_vars=depth_hycom_vars,
-                nodepth_hycom_vars=nodepth_hycom_vars,
-                time_slice=time_slice,
-                lat_min=float(lat_min),
-                lat_max=float(lat_max),
-                lon_min=float(lon_min),
-                lon_max=float(lon_max),
-                depth_min_pos=depth_min_pos,
-                depth_max_pos=depth_max_pos,
-            )
+            # Build day-by-day chunk windows for the month
+            chunk_start = month_start
+            chunks: list[xr.Dataset] = []
+            while chunk_start <= month_end:
+                chunk_end = min(chunk_start + timedelta(days=chunk_days - 1), month_end)
+                time_slice = slice(
+                    chunk_start.strftime("%Y-%m-%d"),
+                    chunk_end.strftime("%Y-%m-%d"),
+                )
+                subset = _select_subset(
+                    ds=ds,
+                    depth_hycom_vars=depth_hycom_vars,
+                    nodepth_hycom_vars=nodepth_hycom_vars,
+                    time_slice=time_slice,
+                    lat_min=float(lat_min),
+                    lat_max=float(lat_max),
+                    lon_min=float(lon_min),
+                    lon_max=float(lon_max),
+                    depth_min_pos=depth_min_pos,
+                    depth_max_pos=depth_max_pos,
+                )
+                subset.load()
+                chunks.append(subset)
+                print(f"    chunk {chunk_start} → {chunk_end} ✓")
+                chunk_start = chunk_end + timedelta(days=1)
 
-            subset.load()
-            subset.to_netcdf(str(filepath))
+            monthly_ds = xr.concat(chunks, dim="time")
+            monthly_ds.to_netcdf(str(filepath))
 
             downloaded.append(filepath)
             print(f"    ✓ Saved {filename}")
