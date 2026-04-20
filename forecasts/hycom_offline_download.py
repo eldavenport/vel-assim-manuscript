@@ -25,11 +25,11 @@ LAT_MIN       = -10.0
 LAT_MAX       = 10.0
 DEPTH_MIN_POS = 0.0
 DEPTH_MAX_POS = 500.0
-VARIABLES     = ["surf_el", "water_u", "water_v"]
-DEPTH_VARS    = {"water_u", "water_v"}
-TIME_START    = date(2013, 11, 1)
+VARIABLES     = ["water_temp"]
+DEPTH_VARS    = {"water_temp"}
+TIME_START    = date(2013, 1, 1)
 TIME_END      = date(2013, 12, 31)
-CHUNK_DAYS    = 2   # ~0.9 GB/request for U+V; keeps well under server truncation limit
+CHUNK_DAYS    = 2   # ~0.9 GB/request; keeps well under server truncation limit
 THREDDS_BASE  = "https://tds.hycom.org/thredds/dodsC/GLBv0.08/expt_53.X/data/{year}"
 
 # ── Build monthly date ranges ────────────────────────────────────────────────
@@ -53,7 +53,7 @@ open_datasets = {}
 try:
     with tqdm(months, unit="month", ncols=72) as pbar:
         for month_start, month_end in pbar:
-            fname = f"hycom_{month_start.year}_{month_start.month:02d}.nc"
+            fname = f"hycom_T_{month_start.year}_{month_start.month:02d}.nc"
             fpath = OUTPUT_DIR / fname
             pbar.set_description(fname)
 
