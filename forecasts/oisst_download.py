@@ -13,13 +13,13 @@ import xarray as xr
 from tqdm import tqdm
 
 OUTPUT_DIR  = Path(sys.argv[1])
-OUTPUT_FILE = OUTPUT_DIR / "oisst_equatorial_pacific_1993to2012.nc"
+OUTPUT_FILE = OUTPUT_DIR / "oisst_equatorial_pacific_2012to2013.nc"
 
 LON_MIN    = -180.0
 LON_MAX    = -90.0
 LAT_MIN    = -10.0
 LAT_MAX    = 10.0
-YEARS      = range(1993, 2013)
+YEARS      = range(2012, 2014)
 ERDDAP_URL = "https://coastwatch.pfeg.noaa.gov/erddap/griddap/ncdcOisst21Agg_LonPM180"
 
 if OUTPUT_FILE.exists():
